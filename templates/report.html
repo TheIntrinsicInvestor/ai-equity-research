@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ ticker }} — Equity Research Memo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; color: #e2e8f0; background: #060a12; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Layout ── */
+    .page { max-width: 1160px; margin: 0 auto; padding: 28px 20px; }
+    .section { background: #0f172a; border: 1px solid #1e293b; border-top: 3px solid #3b82f6; padding: 24px 32px; margin-bottom: 20px; }
+    .section h2 { font-size: 12px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: #e2e8f0; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; font-family: "IBM Plex Mono", monospace; display: flex; align-items: baseline; gap: 12px; }
+    .section h2 .sec-num { font-size: 11px; color: #3b82f6; font-weight: 600; letter-spacing: 0.06em; flex-shrink: 0; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* ── Header ── */
+    .header { background: linear-gradient(135deg, #0a0f1e 0%, #0f2040 100%); color: #fff; padding: 0; margin-bottom: 0; border-bottom: 3px solid #3b82f6; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px 32px 20px; }
+    .header-left h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
+    .header-left .company-meta { color: #93c5fd; font-size: 12px; margin-top: 3px; font-family: "IBM Plex Mono", monospace; }
+    .header-left .headline-text { color: #cbd5e1; font-size: 13.5px; margin-top: 10px; line-height: 1.5; max-width: 600px; }
+    .header-actions { display: flex; align-items: flex-start; gap: 12px; }
+    .price-block { font-size: 30px; font-weight: 700; font-family: "IBM Plex Mono", monospace; text-align: right; }
+    .mktcap-block { color: #93c5fd; font-size: 12px; margin-top: 2px; text-align: right; }
+    .report-date { color: #475569; font-size: 11px; margin-top: 3px; text-align: right; }
+    .btn-print { padding: 6px 14px; background: rgba(255,255,255,0.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.15); border-radius: 3px; font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.03em; transition: background 0.15s; font-family: "IBM Plex Sans", sans-serif; }
+    .btn-print:hover { background: rgba(255,255,255,0.14); }
+
+    /* ── Key metrics bar ── */
+    .key-metrics { background: #080e1a; border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b; padding: 0 32px; display: flex; gap: 0; flex-wrap: wrap; margin-bottom: 20px; }
+    .metric-cell { display: flex; flex-direction: column; padding: 14px 24px; border-right: 1px solid #1e293b; }
+    .metric-cell:last-child { border-right: none; }
+    .metric-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #475569; font-family: "IBM Plex Mono", monospace; }
+    .metric-value { font-size: 14px; font-weight: 600; color: #f1f5f9; font-family: "IBM Plex Mono", monospace; margin-top: 2px; }
+    .metric-value.pos { color: #4ade80; }
+    .metric-value.neg { color: #f87171; }
+
+    /* ── Recommendation badge ── */
+    .rec-badge { display: inline-block; padding: 7px 20px; border-radius: 3px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; font-family: "IBM Plex Mono", monospace; }
+    .rec-strong-buy  { background: rgba(20, 83, 45, 0.7);  color: #bbf7d0; border: 1px solid #166534; }
+    .rec-buy         { background: rgba(22, 101, 52, 0.6);  color: #dcfce7; border: 1px solid #15803d; }
+    .rec-hold        { background: rgba(120, 53, 15, 0.6); color: #fef3c7; border: 1px solid #92400e; }
+    .rec-sell        { background: rgba(127, 29, 29, 0.6); color: #fee2e2; border: 1px solid #991b1b; }
+    .rec-strong-sell { background: rgba(69, 10, 10, 0.7);  color: #fecaca; border: 1px solid #7f1d1d; }
+
+    /* ── Conviction badge ── */
+    .conviction-badge { display: inline-block; padding: 3px 10px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-left: 8px; font-family: "IBM Plex Mono", monospace; vertical-align: middle; }
+    .conviction-high   { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid #1d4ed8; }
+    .conviction-medium { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid #334155; }
+    .conviction-low    { background: rgba(71,85,105,0.1);   color: #64748b; border: 1px solid #1e293b; }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #0a1628; text-align: left; padding: 7px 12px; font-weight: 600; color: #64748b; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid #1e293b; font-family: "IBM Plex Mono", monospace; }
+    td { padding: 7px 12px; border-bottom: 1px solid #111827; font-variant-numeric: tabular-nums; color: #cbd5e1; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1e293b; }
+    .num { text-align: right; }
+    .target-row td { font-weight: 700; background: rgba(59, 130, 246, 0.09); color: #93c5fd; }
+    .target-row:hover td { background: rgba(59, 130, 246, 0.15); }
+
+    /* ── Signal reconciliation table ── */
+    .signal-agree td { background: rgba(20, 83, 45, 0.25); }
+    .signal-agree:hover td { background: rgba(20, 83, 45, 0.38); }
+    .signal-agree td:first-child::before { content: "✓ "; color: #4ade80; font-weight: 700; }
+    .signal-disagree td { background: rgba(120, 53, 15, 0.25); }
+    .signal-disagree:hover td { background: rgba(120, 53, 15, 0.38); }
+    .signal-disagree td:first-child::before { content: "~ "; color: #fbbf24; font-weight: 700; }
+
+    /* ── Quant signal table ── */
+    .pts-pos  { color: #4ade80; font-weight: 700; }
+    .pts-neg  { color: #f87171; font-weight: 700; }
+    .pts-zero { color: #475569; }
+    .mechanical-score { font-size: 20px; font-weight: 700; font-family: "IBM Plex Mono", monospace; color: #64748b; }
+
+    /* ── Sentiment bars ── */
+    .cat-row { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+    .cat-label { width: 110px; font-size: 12px; font-weight: 600; color: #94a3b8; font-family: "IBM Plex Mono", monospace; }
+    .cat-bar-bg { flex: 1; height: 6px; background: #1e293b; overflow: hidden; border-radius: 1px; }
+    .cat-bar-fill { height: 100%; }
+    .cat-score { width: 46px; text-align: right; font-size: 11.5px; font-family: "IBM Plex Mono", monospace; color: #94a3b8; }
+    .bar-pos { background: #22c55e; }
+    .bar-neg { background: #ef4444; }
+    .bar-neu { background: #475569; }
+
+    /* ── Guidance ── */
+    .guidance-quote { color: #475569; font-style: italic; font-size: 11.5px; }
+
+    /* ── Narrative ── */
+    .narrative { font-size: 14.5px; line-height: 1.8; color: #cbd5e1; }
+
+    /* ── Plotly ── */
+    .chart-container { width: 100%; min-height: 340px; }
+    /* ── Catalyst / Risk cards ── */
+    .item-card { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; background: rgba(255,255,255,0.025); border: 1px solid #1e293b; border-radius: 3px; margin-bottom: 6px; font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+    .item-card .item-icon { font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; color: #0f172a; font-size: 11px; }
+      .page { padding: 0; max-width: 100%; }
+      .section { background: #fff; border: 1px solid #e2e8f0; }
+      .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .key-metrics { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rec-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .btn-print { display: none; }
+      .section { break-inside: avoid; margin-bottom: 12px; }
+    }
+  </style>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="page">
+
+  <!-- 1. Header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-left">
+        <h1>{{ ticker }} &mdash; {{ company_name }}</h1>
+        <div class="company-meta">{{ exchange }} &nbsp;&middot;&nbsp; {{ sector }} &nbsp;&middot;&nbsp; {{ industry }}</div>
+        <div style="margin-top:10px;">
+          <span class="rec-badge rec-{{ recommendation | lower | replace(' ', '-') }}">{{ recommendation }}</span>
+          <span class="conviction-badge conviction-{{ conviction }}">{{ conviction }} conviction</span>
+        </div>
+        {% if headline %}
+        <div class="headline-text">{{ headline }}</div>
+        {% endif %}
+      </div>
+      <div class="header-actions">
+        <div style="text-align:right;">
+          <div class="price-block">${{ "%.2f"|format(current_price) }}</div>
+          <div class="mktcap-block">Mkt Cap: ${{ "%.1f"|format(market_cap / 1e9) }}B</div>
+          <div class="report-date">Generated {{ report_date }}</div>
+        </div>
+        <button class="btn-print" onclick="window.print()">&#x1F5A8; Print / PDF</button>
+      </div>
+    </div>
+    <!-- Key metrics bar -->
+    <div class="key-metrics">
+      <div class="metric-cell">
+        {% if gsector == "40" %}
+        <span class="metric-label">P/B</span>
+        <span class="metric-value">{{ "%.1f"|format(comps.target.pb) ~ "x" if comps.target.pb is not none else "—" }}</span>
+        {% else %}
+        <span class="metric-label">EV/EBITDA</span>
+        <span class="metric-value">{{ "%.1f"|format(comps.target.ev_ebitda) ~ "x" if comps.target.ev_ebitda is not none else "—" }}</span>
+        {% endif %}
+      </div>
+      <div class="metric-cell">
+        <span class="metric-label">P/E</span>
+        <span class="metric-value">{{ "%.1f"|format(comps.target.pe) ~ "x" if comps.target.pe is not none else "—" }}</span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-label">P/S</span>
+        <span class="metric-value">{{ "%.1f"|format(comps.target.ps) ~ "x" if comps.target.ps is not none else "—" }}</span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-label">Price Target</span>
+        <span class="metric-value {% if estimates.mean_pt and estimates.mean_pt > current_price %}pos{% elif estimates.mean_pt and estimates.mean_pt < current_price %}neg{% endif %}">
+          {{ "$%.2f"|format(estimates.mean_pt) if estimates.mean_pt else "—" }}
+        </span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-label">% Buy</span>
+        <span class="metric-value {% if estimates.pct_buy and estimates.pct_buy >= 60 %}pos{% elif estimates.pct_buy and estimates.pct_buy < 40 %}neg{% endif %}">
+          {{ "%.0f"|format(estimates.pct_buy) ~ "%" if estimates.pct_buy is not none else "—" }}
+        </span>
+      </div>
+      <div class="metric-cell">
+        <span class="metric-label">Quant Score</span>
+        <span class="metric-value {% if mechanical_score > 0 %}pos{% elif mechanical_score < 0 %}neg{% endif %}">{{ "%+d"|format(mechanical_score) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Investment Thesis -->
+  <div class="section">
+    <h2><span class="sec-num">01</span>Investment Thesis</h2>
+    <p class="narrative">{{ investment_thesis }}</p>
+
+    {% if valuation_commentary %}
+    <p class="narrative" style="margin-top:12px; font-size:13px; color:#475569;">{{ valuation_commentary }}</p>
+    {% endif %}
+
+    {% if sentiment_interpretation %}
+    <div style="margin-top:16px; padding:12px 16px; background:rgba(59,130,246,0.07); border-left:3px solid #3b82f6; border-radius:0 4px 4px 0;">
+      <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#3b82f6; font-family:'IBM Plex Mono',monospace;">Sentiment Read</span>
+      <p style="font-size:13px; color:#cbd5e1; margin-top:4px; line-height:1.6;">{{ sentiment_interpretation }}</p>
+    </div>
+    {% endif %}
+
+    {% if key_risks or catalysts %}
+    <div class="two-col" style="margin-top:20px;">
+      {% if catalysts %}
+      <div>
+        <h3 style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#4ade80; margin-bottom:8px; font-family:'IBM Plex Mono',monospace;">Near-Term Catalysts</h3>
+        <div>
+          {% for c in catalysts %}
+          <div class="item-card"><span class="item-icon" style="color:#4ade80;">&#x25B2;</span>{{ c }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if key_risks %}
+      <div>
+        <h3 style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#f87171; margin-bottom:8px; font-family:'IBM Plex Mono',monospace;">Key Risks</h3>
+        <div>
+          {% for r in key_risks %}
+          <div class="item-card"><span class="item-icon" style="color:#f87171;">&#x25BC;</span>{{ r }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- 3. Evidence (charts in Claude's order) -->
+  <div class="section">
+    <h2><span class="sec-num">02</span>Evidence</h2>
+    {% set chart_labels = {
+      "price": "Price History",
+      "relative_perf": "Relative Performance",
+      "revenue_eps": "Revenue & EPS Trends",
+      "margins": "Margin Trends",
+      "comps": "Comparable Valuation",
+      "estimates": "Analyst Estimates",
+      "sentiment": "Earnings Call Sentiment",
+      "fcf": "FCF & Net Debt"
+    } %}
+    {% for i in range(0, chart_order | length, 2) %}
+    <div class="two-col" style="{% if i > 0 %}margin-top:20px;{% endif %}">
+      {% set key1 = chart_order[i] %}
+      <div>
+        <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; font-family:'IBM Plex Mono',monospace; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #1e293b;">{{ chart_labels.get(key1, key1) }}</div>
+        <div id="chart-{{ key1 }}" class="chart-container"></div>
+        <script>(function(){var s={{ charts[key1] | safe }};Plotly.newPlot('chart-{{ key1 }}',s.data,s.layout,{responsive:true,displayModeBar:false});})();</script>
+      </div>
+      {% if i + 1 < chart_order | length %}
+      {% set key2 = chart_order[i + 1] %}
+      <div>
+        <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; font-family:'IBM Plex Mono',monospace; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #1e293b;">{{ chart_labels.get(key2, key2) }}</div>
+        <div id="chart-{{ key2 }}" class="chart-container"></div>
+        <script>(function(){var s={{ charts[key2] | safe }};Plotly.newPlot('chart-{{ key2 }}',s.data,s.layout,{responsive:true,displayModeBar:false});})();</script>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 4. Signal Analysis -->
+  <div class="section">
+    <h2><span class="sec-num">03</span>Signal Analysis</h2>
+
+    {% if signal_agreements or signal_disagreements %}
+    <div style="display:flex; gap:20px; margin-bottom:14px;">
+      <span style="font-size:12px; font-family:'IBM Plex Mono',monospace; color:#4ade80;">
+        <strong>{{ signal_agreements | length }}</strong> <span style="color:#64748b;">agrees</span>
+      </span>
+      <span style="font-size:12px; font-family:'IBM Plex Mono',monospace; color:#fbbf24;">
+        <strong>{{ signal_disagreements | length }}</strong> <span style="color:#64748b;">overrides</span>
+      </span>
+    </div>
+    <h3 style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; font-family:'IBM Plex Mono',monospace;">Qualitative Reconciliation</h3>
+    <table style="margin-bottom:24px;">
+      <thead>
+        <tr>
+          <th>Signal</th>
+          <th>Stance</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in signal_agreements %}
+        <tr class="signal-agree">
+          <td>{{ a.signal }}</td>
+          <td style="color:#4ade80; font-weight:600; font-family:'IBM Plex Mono',monospace; white-space:nowrap;">Agrees</td>
+          <td style="color:#94a3b8;">{{ a.rationale }}</td>
+        </tr>
+        {% endfor %}
+        {% for d in signal_disagreements %}
+        <tr class="signal-disagree">
+          <td>{{ d.signal }}</td>
+          <td style="color:#fbbf24; font-weight:600; font-family:'IBM Plex Mono',monospace; white-space:nowrap;">Overrides</td>
+          <td style="color:#94a3b8;">
+            <span style="color:#64748b; text-decoration:line-through; font-size:11px;">{{ d.mechanical_view }}</span>
+            &rarr; {{ d.claude_view }}<br>
+            <span style="font-size:11.5px; font-style:italic;">{{ d.rationale }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <h3 style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px; font-family:'IBM Plex Mono',monospace;">
+      Quantitative Signals: Mechanical Score <span class="mechanical-score">{{ "%+d"|format(mechanical_score) }}</span>
+      <span style="font-size:11px; color:#475569; font-weight:400; margin-left:6px;">&rarr; {{ mechanical_recommendation }}</span>
+    </h3>
+    <table>
+      <thead><tr><th>Signal</th><th>Detail</th><th class="num">Points</th></tr></thead>
+      <tbody>
+        {% for row in signal_breakdown %}
+        <tr>
+          <td>{{ row.name }}</td>
+          <td>{{ row.value }}</td>
+          <td class="num {% if row.points > 0 %}pts-pos{% elif row.points < 0 %}pts-neg{% else %}pts-zero{% endif %}">
+            {% if row.points > 0 %}+{% endif %}{{ row.points }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 5. Comparable Company Valuation -->
+  <div class="section">
+    <h2><span class="sec-num">04</span>Comparable Company Valuation</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Company</th>
+          {% if gsector == "40" %}<th class="num">P/B</th>{% else %}<th class="num">EV/EBITDA</th>{% endif %}
+          <th class="num">P/E</th>
+          <th class="num">P/S</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="target-row">
+          <td>{{ ticker }} (target)</td>
+          {% if gsector == "40" %}
+          <td class="num">{{ "%.1f"|format(comps.target.pb) ~ "x" if comps.target.pb is not none else "N/A" }}</td>
+          {% else %}
+          <td class="num">{{ "%.1f"|format(comps.target.ev_ebitda) ~ "x" if comps.target.ev_ebitda is not none else "N/A" }}</td>
+          {% endif %}
+          <td class="num">{{ "%.1f"|format(comps.target.pe) ~ "x" if comps.target.pe is not none else "N/A" }}</td>
+          <td class="num">{{ "%.1f"|format(comps.target.ps) ~ "x" if comps.target.ps is not none else "N/A" }}</td>
+        </tr>
+        {% for peer in comps.peers %}
+        <tr>
+          <td>{{ peer.ticker }}</td>
+          {% if gsector == "40" %}
+          <td class="num">{{ "%.1f"|format(peer.pb) ~ "x" if peer.pb is not none else "N/A" }}</td>
+          {% else %}
+          <td class="num">{{ "%.1f"|format(peer.ev_ebitda) ~ "x" if peer.ev_ebitda is not none else "N/A" }}</td>
+          {% endif %}
+          <td class="num">{{ "%.1f"|format(peer.pe) ~ "x" if peer.pe is not none else "N/A" }}</td>
+          <td class="num">{{ "%.1f"|format(peer.ps) ~ "x" if peer.ps is not none else "N/A" }}</td>
+        </tr>
+        {% endfor %}
+        <tr style="border-top: 2px solid #1e293b; font-weight: 600;">
+          <td>Peer Median</td>
+          {% if gsector == "40" %}
+          <td class="num">{{ "%.1f"|format(comps.peer_stats.pb.median) ~ "x" if comps.peer_stats.pb.median is not none else "N/A" }}</td>
+          {% else %}
+          <td class="num">{{ "%.1f"|format(comps.peer_stats.ev_ebitda.median) ~ "x" if comps.peer_stats.ev_ebitda.median is not none else "N/A" }}</td>
+          {% endif %}
+          <td class="num">{{ "%.1f"|format(comps.peer_stats.pe.median) ~ "x" if comps.peer_stats.pe.median is not none else "N/A" }}</td>
+          <td class="num">{{ "%.1f"|format(comps.peer_stats.ps.median) ~ "x" if comps.peer_stats.ps.median is not none else "N/A" }}</td>
+        </tr>
+        <tr style="color: #64748b; font-size: 12px;">
+          <td>25th–75th Pct</td>
+          {% if gsector == "40" %}
+          <td class="num">{% if comps.peer_stats.pb.p25 is not none %}{{ "%.1f"|format(comps.peer_stats.pb.p25) }}x – {{ "%.1f"|format(comps.peer_stats.pb.p75) }}x{% else %}N/A{% endif %}</td>
+          {% else %}
+          <td class="num">{% if comps.peer_stats.ev_ebitda.p25 is not none %}{{ "%.1f"|format(comps.peer_stats.ev_ebitda.p25) }}x – {{ "%.1f"|format(comps.peer_stats.ev_ebitda.p75) }}x{% else %}N/A{% endif %}</td>
+          {% endif %}
+          <td class="num">{% if comps.peer_stats.pe.p25 is not none %}{{ "%.1f"|format(comps.peer_stats.pe.p25) }}x – {{ "%.1f"|format(comps.peer_stats.pe.p75) }}x{% else %}N/A{% endif %}</td>
+          <td class="num">{% if comps.peer_stats.ps.p25 is not none %}{{ "%.1f"|format(comps.peer_stats.ps.p25) }}x – {{ "%.1f"|format(comps.peer_stats.ps.p75) }}x{% else %}N/A{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 6. Analyst Estimates -->
+  <div class="section">
+    <h2><span class="sec-num">05</span>Analyst Estimates</h2>
+    <table>
+      <thead><tr><th>Metric</th><th class="num">Consensus</th></tr></thead>
+      <tbody>
+        <tr><td>Mean EPS Estimate (NTM)</td><td class="num">${{ "%.2f"|format(estimates.mean_eps) if estimates.mean_eps else "N/A" }}</td></tr>
+        <tr><td>Mean Price Target</td><td class="num">${{ "%.2f"|format(estimates.mean_pt) if estimates.mean_pt else "N/A" }}</td></tr>
+        <tr>
+          <td>% Buy Ratings{% if estimates.num_raters %} <span style="color:#94a3b8;font-size:11px;">({{ estimates.num_raters }} raters)</span>{% endif %}</td>
+          <td class="num">{{ "%.0f"|format(estimates.pct_buy) if estimates.pct_buy is not none else "N/A" }}%</td>
+        </tr>
+        <tr><td>% Hold Ratings</td><td class="num">{{ "%.0f"|format(estimates.pct_hold) if estimates.pct_hold is not none else "N/A" }}%</td></tr>
+        <tr><td>% Sell Ratings</td><td class="num">{{ "%.0f"|format(estimates.pct_sell) if estimates.pct_sell is not none else "N/A" }}%</td></tr>
+        <tr>
+          <td>EPS Analyst Count</td>
+          <td class="num">{{ estimates.num_analysts if estimates.num_analysts else "N/A" }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 7. Earnings Call Analysis -->
+  <div class="section">
+    <h2><span class="sec-num">06</span>Earnings Call Analysis</h2>
+
+    {% if nlp_results %}
+    {% set latest = nlp_results[-1] %}
+    <h3 style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; font-family:'IBM Plex Mono',monospace;">
+      Category Sentiment &mdash; {{ latest.period }}
+    </h3>
+    <div style="margin-bottom: 24px;">
+      {% for cat, data in latest.categories.items() %}
+      {% if data.score != 0.0 %}
+      <div class="cat-row">
+        <span class="cat-label">{{ cat }}</span>
+        <div class="cat-bar-bg">
+          <div class="cat-bar-fill {% if data.score > 0.1 %}bar-pos{% elif data.score < -0.1 %}bar-neg{% else %}bar-neu{% endif %}"
+               style="width: {{ [([data.score, -1] | max), 1] | min * 50 + 50 }}%">
+          </div>
+        </div>
+        <span class="cat-score">{{ "%.2f"|format(data.score) }}</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if guidance %}
+    <h3 style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; font-family:'IBM Plex Mono',monospace;">
+      Forward Guidance Extracted
+    </h3>
+    <table>
+      <thead>
+        <tr><th>Metric</th><th>Value / Range</th><th>Period</th><th>Speaker</th><th>Quote</th></tr>
+      </thead>
+      <tbody>
+        {% for item in guidance %}
+        <tr>
+          <td>{{ item.metric }}</td>
+          <td>{{ item.value }}</td>
+          <td>{{ item.period }}</td>
+          <td>{{ item.speaker }}</td>
+          <td class="guidance-quote">{{ item.verbatim_quote }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#64748b; font-size:13px;">No forward guidance extracted.</p>
+    {% endif %}
+  </div>
+
+  <!-- 8. Balance Sheet & Cash Flow -->
+  {% if bs_stats and bs_stats.show %}
+  <div class="section">
+    <h2><span class="sec-num">07</span>Balance Sheet &amp; Cash Flow</h2>
+
+    <div style="display:flex; gap:0; flex-wrap:wrap; margin-bottom:24px; background:#080e1a; border:1px solid #1e293b;">
+      {% if bs_stats.fcf_bn is not none %}
+      <div class="metric-cell">
+        <span class="metric-label">FCF (Latest Year)</span>
+        <span class="metric-value {% if bs_stats.fcf_bn >= 0 %}pos{% else %}neg{% endif %}">
+          ${{ "%.1f"|format(bs_stats.fcf_bn) }}B
+        </span>
+      </div>
+      {% endif %}
+      {% if bs_stats.nd_bn is not none %}
+      <div class="metric-cell">
+        <span class="metric-label">{{ "Net Cash" if bs_stats.nd_bn < 0 else "Net Debt" }}</span>
+        <span class="metric-value {% if bs_stats.nd_bn < 0 %}pos{% else %}neg{% endif %}">
+          ${{ "%.1f"|format(bs_stats.nd_bn | abs) }}B
+        </span>
+      </div>
+      {% endif %}
+      {% if bs_stats.nd_ebitda is not none %}
+      <div class="metric-cell">
+        <span class="metric-label">Net Debt / EBITDA</span>
+        <span class="metric-value {% if bs_stats.nd_ebitda < 2 %}pos{% elif bs_stats.nd_ebitda > 4 %}neg{% endif %}">
+          {{ "%.1f"|format(bs_stats.nd_ebitda) }}x
+        </span>
+      </div>
+      {% endif %}
+      {% if bs_stats.fcf_yield is not none %}
+      <div class="metric-cell">
+        <span class="metric-label">FCF Yield</span>
+        <span class="metric-value {% if bs_stats.fcf_yield >= 4 %}pos{% elif bs_stats.fcf_yield < 0 %}neg{% endif %}">
+          {{ "%.1f"|format(bs_stats.fcf_yield) }}%
+        </span>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if "fcf" in charts %}
+    <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; font-family:'IBM Plex Mono',monospace; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #1e293b;">FCF &amp; Net Debt Trend</div>
+    <div id="chart-fcf" class="chart-container"></div>
+    <script>(function(){var s={{ charts["fcf"] | safe }};Plotly.newPlot('chart-fcf',s.data,s.layout,{responsive:true,displayModeBar:false});})();</script>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>
